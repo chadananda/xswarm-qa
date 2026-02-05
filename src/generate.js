@@ -24,6 +24,7 @@ export async function generate(root, answers, { dryRun, version }) {
     ['.local/QA.md',                      T.agentQA('local-ai', answers)],
     ['.xswarm-qa/tools/check-update.js',  T.checkUpdateTool()],
     ['.xswarm-qa/tools/notify.js',        T.notifyTool()],
+    ['README.md',                         T.workspaceReadme(answers, version)],
   ];
 
   const dirs = [
