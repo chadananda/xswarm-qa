@@ -4,7 +4,7 @@
   "description": "Autonomous AI-powered QA assistant. Point at any web app, get professional audit reports. Zero integration required.",
   "type": "module",
   "bin": {
-    "xswarm-qa": "./src/index.js"
+    "xswarm-qa": "src/index.js"
   },
   "files": [
     "src/**/*",
@@ -12,15 +12,27 @@
     "LICENSE"
   ],
   "keywords": [
-    "qa", "testing", "automated-testing", "ai", "claude", "gemini",
-    "accessibility", "audit", "web-testing", "cli", "autonomous",
-    "quality-assurance", "seo", "performance", "ux"
+    "qa",
+    "testing",
+    "automated-testing",
+    "ai",
+    "claude",
+    "gemini",
+    "accessibility",
+    "audit",
+    "web-testing",
+    "cli",
+    "autonomous",
+    "quality-assurance",
+    "seo",
+    "performance",
+    "ux"
   ],
   "author": "Chad Jones",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chadananda/xswarm-qa.git"
+    "url": "git+https://github.com/chadananda/xswarm-qa.git"
   },
   "homepage": "https://github.com/chadananda/xswarm-qa",
   "bugs": "https://github.com/chadananda/xswarm-qa/issues",
