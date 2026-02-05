@@ -1,0 +1,8 @@
+tmp/
+.claude/
+coverage/
+tests/
+docs/
+PRD.md
+.DS_Store
+*.log
