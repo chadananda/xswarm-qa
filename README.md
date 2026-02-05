@@ -188,9 +188,9 @@ The agent doesn't just check boxes — it reports the **experience** of using yo
 
 ## Autonomous Scheduling
 
-Pair with [OpenClawd](https://github.com/chadananda/openclawd) for fully hands-off QA:
+Pair with [OpenClaw](https://openclaw.ai/) for fully hands-off QA:
 
-1. xSwarm QA **auto-detects** OpenClawd during setup
+1. xSwarm QA **auto-detects** OpenClaw during setup
 2. Creates a **cron job** that checks for site changes
 3. Triggers a QA session **only when something changed**
 4. Sends results via **webhook, file signal, or email**
@@ -256,7 +256,7 @@ Start in audit-only mode (public pages). Enable authenticated testing anytime:
 
 **Consultant** — One workspace per client. Deliver professional audit reports. Use free preliminary audits as a prospecting tool.
 
-**Agency** — Standardized quality across your entire portfolio. One folder per client, OpenClawd manages all schedules.
+**Agency** — Standardized quality across your entire portfolio. One folder per client, OpenClaw manages all schedules.
 
 **Tech Lead** — Monitor production for regressions. Know when deploys break things before your users tell you.
 

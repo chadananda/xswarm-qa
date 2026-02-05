@@ -5,9 +5,12 @@ import { execSync } from 'child_process';
 // ── Validation ──────────────────────────────────────────────
 // Format-only check. Actual reachability tested during QA runs, not setup
 // (avoids blocking on slow DNS or firewalled dev servers).
+const normalizeUrl = s => /^https?:\/\//i.test(s) ? s : `https://${s}`;
+const looksLikeDomain = s => /^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)*\.[a-z]{2,}$/i.test(s);
+
 const validUrl = s => {
-  try { new URL(s); return true; }
-  catch { return 'Enter a valid URL (https://example.com)'; }
+  try { new URL(normalizeUrl(s)); return true; }
+  catch { return 'Enter a valid URL (example.com)'; }
 };
 
 // ── Choice Definitions ──────────────────────────────────────
@@ -35,16 +38,25 @@ const FREQUENCIES = [
   { name: 'Manual only',        value: 'manual' },
 ];
 
-const NOTIFIERS = [
-  { name: 'Webhook (POST to URL)',   value: 'webhook' },
-  { name: 'File signal (.signal)',   value: 'file-signal' },
-  { name: 'None',                    value: 'none' },
+const CRON_SCHEDULES = [
+  { name: 'Every hour',      value: '0 * * * *' },
+  { name: 'Every 6 hours',   value: '0 */6 * * *' },
+  { name: 'Daily at 7 AM',   value: '0 7 * * *' },
+  { name: 'Weekly (Mon 7 AM)', value: '0 7 * * 1' },
 ];
+
+// Map the frequency answer from Stage 3 to a sensible cron default
+const frequencyToCron = (freq) => ({
+  'on-change': '0 * * * *',
+  'daily':     '0 7 * * *',
+  'weekly':    '0 7 * * 1',
+  'manual':    '0 7 * * *',
+})[freq] || '0 7 * * *';
 
 // ── Stage Labels ────────────────────────────────────────────
 const NAMES = [
   'Site Configuration', 'Authentication', 'Update Detection',
-  'Schedule & Frequency', 'Agent Selection', 'OpenClawd Integration',
+  'Change Detection Schedule', 'Agent Selection', 'OpenClaw Integration',
 ];
 
 const header = (n) => {
@@ -59,8 +71,9 @@ const header = (n) => {
 const stages = [
   async (a) => {
     header(0);
+    const raw = await input({ message: 'Primary URL to test:', default: a.url || a._urlDefault, validate: validUrl });
     return {
-      url:     await input({ message: 'Primary URL to test:', default: a.url, validate: validUrl }),
+      url:     normalizeUrl(raw),
       domains: await input({ message: 'Additional domains (comma-separated, optional):', default: a.domains || '' }),
     };
   },
@@ -77,7 +90,7 @@ const stages = [
       default: a.authMode,
     });
     if (authMode === 'audit') return { authMode, loginUrl: '', username: '', authPassword: '' };
-    const loginUrl = await input({ message: 'Login URL:', default: a.loginUrl, validate: validUrl });
+    const loginUrl = normalizeUrl(await input({ message: 'Login URL:', default: a.loginUrl, validate: validUrl }));
     const username = await input({ message: 'Test username:', default: a.username });
     const authPassword = await password({ message: 'Test password:' });
     console.log(chalk.dim('  ↳ Credentials stored in .env.local (gitignored). Never committed.'));
@@ -90,10 +103,10 @@ const stages = [
     const strategy = await select({ message: 'How to detect site updates?', choices: STRATEGIES, default: a.strategy });
     const strategyConfig = { ...a.strategyConfig };
     if (strategy === 'version-endpoint') {
-      strategyConfig.endpoint = await input({ message: 'Version endpoint URL:', default: strategyConfig.endpoint, validate: validUrl });
+      strategyConfig.endpoint = normalizeUrl(await input({ message: 'Version endpoint URL:', default: strategyConfig.endpoint, validate: validUrl }));
       strategyConfig.jsonPath = await input({ message: 'JSON path (e.g. .version):', default: strategyConfig.jsonPath || '.version' });
     } else if (strategy === 'rss') {
-      strategyConfig.feedUrl = await input({ message: 'RSS feed URL:', default: strategyConfig.feedUrl, validate: validUrl });
+      strategyConfig.feedUrl = normalizeUrl(await input({ message: 'RSS feed URL:', default: strategyConfig.feedUrl, validate: validUrl }));
     }
     return { strategy, strategyConfig };
   },
@@ -102,7 +115,7 @@ const stages = [
     header(3);
     return {
       rapidDev:  await confirm({ message: 'Site in rapid development?', default: a.rapidDev ?? false }),
-      frequency: await select({ message: 'Run frequency:', choices: FREQUENCIES, default: a.frequency }),
+      frequency: await select({ message: 'How often to check for changes:', choices: FREQUENCIES, default: a.frequency }),
     };
   },
 
@@ -112,22 +125,25 @@ const stages = [
     return { agent: await select({ message: 'Default AI agent:', choices: AGENTS, default: a.agent }) };
   },
 
-  // Auto-detect OpenClawd binary; skip gracefully if absent
+  // Auto-detect OpenClaw binary; offer cron job + report notification
   async (a) => {
     header(5);
-    const detected = (() => { try { execSync('which openclawd', { stdio: 'ignore' }); return true; } catch { return false; } })();
+    const detected = (() => { try { execSync('which openclaw', { stdio: 'ignore' }); return true; } catch { return false; } })();
     if (!detected) {
-      console.log(chalk.dim('  OpenClawd not found. Skipping. Install later and re-run to enable.'));
-      return { openclawd: false, notification: 'none', webhookUrl: '' };
+      console.log(chalk.dim('  OpenClaw not found on PATH. Skipping.'));
+      console.log(chalk.dim('  Install OpenClaw later and re-run setup to enable.'));
+      return { openclaw: false, cronSchedule: '', openclawNotify: false };
     }
-    console.log(chalk.green('  ✓ OpenClawd detected'));
-    const openclawd = await confirm({ message: 'Enable OpenClawd integration?', default: a.openclawd ?? true });
-    if (!openclawd) return { openclawd: false, notification: 'none', webhookUrl: '' };
-    const notification = await select({ message: 'Notification method:', choices: NOTIFIERS, default: a.notification });
-    const webhookUrl = notification === 'webhook'
-      ? await input({ message: 'Webhook URL:', default: a.webhookUrl, validate: validUrl })
-      : '';
-    return { openclawd, notification, webhookUrl };
+    console.log(chalk.green('  ✓ OpenClaw detected'));
+    const openclaw = await confirm({ message: 'Register an OpenClaw cron job for this workspace?', default: a.openclaw ?? true });
+    if (!openclaw) return { openclaw: false, cronSchedule: '', openclawNotify: false };
+    const cronSchedule = await select({
+      message: 'Cron schedule:',
+      choices: CRON_SCHEDULES,
+      default: a.cronSchedule || frequencyToCron(a.frequency),
+    });
+    const openclawNotify = await confirm({ message: 'Notify OpenClaw when QA reports are ready?', default: a.openclawNotify ?? true });
+    return { openclaw, cronSchedule, openclawNotify };
   },
 ];
 
@@ -140,9 +156,11 @@ function printSummary(a) {
     ['Site',     a.url + (a.domains ? chalk.dim(` +${a.domains.split(',').length} domain(s)`) : '')],
     ['Auth',     a.authMode === 'auth' ? `${a.loginUrl} (${a.username})` : 'Audit only'],
     ['Updates',  label(STRATEGIES, a.strategy)],
-    ['Schedule', label(FREQUENCIES, a.frequency) + (a.rapidDev ? chalk.yellow(' ⚡ rapid') : '')],
+    ['Check',    label(FREQUENCIES, a.frequency) + (a.rapidDev ? chalk.yellow(' ⚡ rapid') : '')],
     ['Agent',    label(AGENTS, a.agent)],
-    ['Notify',   label(NOTIFIERS, a.notification)],
+    ['OpenClaw',  a.openclaw
+      ? `Cron: ${a.cronSchedule}` + (a.openclawNotify ? ' + notify on report' : '')
+      : 'Not registered'],
   ];
   console.log(`\n  ${chalk.bold('Configuration Summary')}`);
   console.log(chalk.dim('  ' + '─'.repeat(50)));
@@ -154,8 +172,9 @@ function printSummary(a) {
 // Runs all 6 stages, then enters a review loop where the user can
 // go back and edit any stage before confirming workspace creation.
 
-export async function interview() {
+export async function interview({ folderName } = {}) {
   const answers = {};
+  if (folderName && looksLikeDomain(folderName)) answers._urlDefault = folderName;
   let i = 0;
 
   // Collect all stages — Ctrl+C at any point returns null

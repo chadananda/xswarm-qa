@@ -79,21 +79,17 @@ export const config = (a) => `// xSwarm QA Configuration — ${host(a.url)}
     // "model": "llama3:70b",` : ''}
   },
 
-  // ─── OpenClawd Integration ─────────────────────────────
-  "openclawd": {
-    "enabled": ${!!a.openclawd},
-  },
-
-  // ─── Notifications ─────────────────────────────────────
-  "notifications": {
-    "type": "${a.notification || 'none'}",  // webhook | file-signal | none${a.notification === 'webhook' ? `
-    "url": "${a.webhookUrl || ''}",` : ''}
+  // ─── OpenClaw Integration ──────────────────────────────
+  "openclaw": {
+    "enabled": ${!!a.openclaw},${a.openclaw ? `
+    "cronSchedule": "${a.cronSchedule}",
+    "notifyOnReport": ${!!a.openclawNotify},` : ''}
   },
 }
 `;
 
 // ── check-and-run.sh ────────────────────────────────────────
-// The single entry point for both manual runs and OpenClawd cron jobs.
+// The single entry point for both manual runs and OpenClaw cron jobs.
 // Creates a timestamped session, constrains agent writes to that folder,
 // then invokes whichever AI agent is configured.
 export const checkAndRun = (a) => `#!/usr/bin/env bash
@@ -162,7 +158,13 @@ esac
 
 echo ""
 echo "  Session complete: $SESSION/"
-node .xswarm-qa/tools/notify.js "$SESSION" 2>/dev/null || true
+${a.openclawNotify ? `
+# ── Notify OpenClaw ────────────────────────────────────
+REPORT_PATH="$(pwd)/$SESSION/report.md"
+if command -v openclaw &>/dev/null; then
+  openclaw system event --text "xSwarm QA report ready for ${host(a.url)}. Read the report at: $REPORT_PATH" --mode now 2>/dev/null || true
+fi
+` : ''}node .xswarm-qa/tools/notify.js "$SESSION" 2>/dev/null || true
 `;
 
 // ── Agent QA.md Templates ───────────────────────────────────
@@ -447,7 +449,7 @@ const readConfig = (path) => {
 `;
 
 // ── Workspace README ────────────────────────────────────────
-// Dual-audience: humans browsing the folder AND AI agents (like OpenClawd)
+// Dual-audience: humans browsing the folder AND AI agents (like OpenClaw)
 // that need to understand what this workspace is and how to operate it.
 export const workspaceReadme = (a, version) => {
   const h = host(a.url);
@@ -537,8 +539,7 @@ runs/2025-06-15_14-30-00/
 | Update detection | ${a.strategy} |
 | Schedule | ${a.frequency}${a.rapidDev ? ' (rapid development mode)' : ''} |
 | Agent | ${a.agent} |
-| Notifications | ${a.notification || 'none'} |
-${a.openclawd ? '| OpenClawd | Enabled |' : ''}
+${a.openclaw ? `| OpenClaw | Cron: \`${a.cronSchedule}\`${a.openclawNotify ? ', notify on report' : ''} |` : ''}
 
 ---
 
@@ -563,7 +564,7 @@ The AI agent operates under strict constraints defined in the QA.md files:
 
 ---
 
-## For OpenClawd / Automation
+## For OpenClaw / Automation
 
 This workspace is designed for unattended operation. Key integration points:
 

@@ -86,7 +86,7 @@ export async function run(args) {
 
   console.log(chalk.bold(`  Creating QA workspace: ${chalk.cyan(folderName)}/\n`));
 
-  const answers = await interview();
+  const answers = await interview({ folderName });
   if (!answers) return console.log(chalk.dim('\n  Setup cancelled.\n'));
 
   await generate(folderPath, { ...answers, folderName }, { dryRun: flags.has('--dry-run'), version: pkg.version });

@@ -1,5 +1,6 @@
 import { mkdir, writeFile, chmod } from 'fs/promises';
-import { join, basename, dirname } from 'path';
+import { join, basename, dirname, resolve } from 'path';
+import { execSync } from 'child_process';
 import chalk from 'chalk';
 import ora from 'ora';
 import * as T from './templates.js';
@@ -53,6 +54,22 @@ export async function generate(root, answers, { dryRun, version }) {
   }
 
   spinner.succeed(chalk.green('Workspace created successfully'));
+
+  // ── OpenClaw Cron Registration ────────────────────────
+  if (answers.openclaw && answers.cronSchedule) {
+    const absPath = resolve(root);
+    const host = new URL(answers.url).hostname;
+    try {
+      execSync(
+        `openclaw cron add --name "xSwarm QA: ${host}" --cron "${answers.cronSchedule}" --session isolated --message "cd ${absPath} && ./check-and-run.sh"`,
+        { stdio: 'pipe' },
+      );
+      console.log(chalk.green(`  ✓ OpenClaw cron job registered (${answers.cronSchedule})`));
+    } catch (err) {
+      console.log(chalk.yellow(`  ⚠ Failed to register OpenClaw cron job: ${err.message}`));
+      console.log(chalk.dim(`    Run manually: openclaw cron add --name "xSwarm QA: ${host}" --cron "${answers.cronSchedule}" --session isolated --message "cd ${absPath} && ./check-and-run.sh"`));
+    }
+  }
 
   // ── Next Steps ──────────────────────────────────────────
   const name = basename(root);
