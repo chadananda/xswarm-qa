@@ -69,6 +69,16 @@ export async function generate(root, answers, { dryRun, version }) {
       console.log(chalk.yellow(`  ⚠ Failed to register OpenClaw cron job: ${err.message}`));
       console.log(chalk.dim(`    Run manually: openclaw cron add --name "xSwarm QA: ${host}" --cron "${answers.cronSchedule}" --session isolated --message "cd ${absPath} && ./check-and-run.sh"`));
     }
+    // Notify OpenClaw's main session so it can inform the user
+    try {
+      execSync(
+        `openclaw system event --text "xSwarm QA workspace created for ${host}. Cron schedule: ${answers.cronSchedule}. Workspace: ${absPath}. Please notify the user that automated QA is now active for this site." --mode now`,
+        { stdio: 'pipe' },
+      );
+      console.log(chalk.green('  ✓ OpenClaw notified'));
+    } catch {
+      // Non-fatal — gateway may not be running yet
+    }
   }
 
   // ── Next Steps ──────────────────────────────────────────
