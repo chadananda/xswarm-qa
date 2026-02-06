@@ -394,10 +394,12 @@ const LAST = '.xswarm-qa/.last-version';
     curr = hash((await res.text()).replace(/<script[^>]*nonce[^>]*>[\\s\\S]*?<\\/script>/g, ''));
   }
 
-  if (curr && curr !== prev) {
-    writeFileSync(LAST, curr, 'utf8');
-    process.exit(0);
-  }
+  if (curr) writeFileSync(LAST, curr, 'utf8');
+
+  // First run (no baseline) → always run QA
+  if (!prev) process.exit(0);
+
+  if (curr && curr !== prev) process.exit(0);
   process.exit(1);
 })().catch(() => process.exit(1));
 `;
