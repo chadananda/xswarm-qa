@@ -71,8 +71,16 @@ export async function generate(root, answers, { dryRun, version }) {
     }
     // Notify OpenClaw's main session so it can inform the user
     try {
+      const msg = [
+        `xSwarm QA workspace created for ${host}.`,
+        `Cron schedule: ${answers.cronSchedule}.`,
+        `Workspace: ${absPath}.`,
+        `To run QA on demand: cd ${absPath} && ./check-and-run.sh --force`,
+        `The --force flag skips change detection and always runs a full QA session.`,
+        `Please notify the user that automated QA is now active for this site.`,
+      ].join(' ');
       execSync(
-        `openclaw system event --text "xSwarm QA workspace created for ${host}. Cron schedule: ${answers.cronSchedule}. Workspace: ${absPath}. Please notify the user that automated QA is now active for this site." --mode now`,
+        `openclaw system event --text ${JSON.stringify(msg)} --mode now`,
         { stdio: 'pipe' },
       );
       console.log(chalk.green('  ✓ OpenClaw notified'));
