@@ -7,3 +7,7 @@ dist/
 .env
 .env.local
 coverage/
+
+# --- standard hygiene ---
+Thumbs.db
+*conflicted copy*
