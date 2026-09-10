@@ -46,6 +46,9 @@ The agent explores your app like a human, thinks like a QA consultant, and gener
 
 ## Quick Start
 
+Requires **Node.js 22.13 or newer**. Node 18 and 20 both reached end-of-life in 2026 and
+are no longer supported.
+
 ```bash
 # Create a workspace (interactive setup)
 npx xswarm-qa my-app-qa
