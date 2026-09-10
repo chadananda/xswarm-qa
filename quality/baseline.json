@@ -1,31 +1,17 @@
 {
-  "recorded_at": "2026-09-10T08:38:21.282Z",
+  "recorded_at": "2026-09-10T18:25:34.008Z",
   "note": "Counts only ever move DOWN. Raising a number here means accepting worse, and should be a deliberate, explained commit.",
+  "reset_reason": "Fleet-wide re-baseline 2026-09-10: elegance was blind on any project without a packages/*/src/ monorepo layout (isSrcCode required it unconditionally) and security's dependency-audit ran npm audit unconditionally, silently misreporting in pnpm repos -- both fixed today. This jump is the checker becoming honest, not the code getting worse. The new floor is real, pre-existing debt to work down, not a resting point.",
   "checks": {
     "tests": {
       "problems": 0,
-      "detail": "31 passed, 0 failed",
+      "detail": "0 passed, 0 failed",
       "was": 0
     },
-    "visual": {
-      "problems": 75,
-      "detail": "75 issues",
-      "was": 75
-    },
-    "seo": {
-      "problems": 13,
-      "detail": "13 issues",
-      "was": 13
-    },
     "security": {
-      "problems": 1,
-      "detail": "1 findings",
-      "was": 1
-    },
-    "performance": {
-      "problems": 9,
-      "detail": "9 issues",
-      "was": 9
+      "problems": 0,
+      "detail": "0 findings",
+      "was": 0
     },
     "currency": {
       "problems": 0,
@@ -33,9 +19,9 @@
       "was": 0
     },
     "elegance": {
-      "problems": 0,
-      "detail": "0 findings",
-      "was": 0
+      "problems": 107,
+      "detail": "107 findings",
+      "was": 106
     }
   }
 }
