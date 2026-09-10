@@ -11,3 +11,6 @@ coverage/
 # --- standard hygiene ---
 Thumbs.db
 *conflicted copy*
+
+# agent scratch
+worker-status.json
