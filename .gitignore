@@ -14,3 +14,11 @@ Thumbs.db
 
 # agent scratch
 worker-status.json
+
+# Fleet quality gate -- synced from ~/.claude/quality/ by sync-quality.
+# Do not hand-edit or commit these; re-run sync-quality instead. baseline.json
+# is deliberately NOT ignored -- it is this project's own ratchet history.
+/quality/*.mjs
+/quality/package.json
+/quality/package-lock.json
+/quality/node_modules/
