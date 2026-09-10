@@ -92,6 +92,9 @@ const stages = [
     if (authMode === 'audit') return { authMode, loginUrl: '', username: '', authPassword: '' };
     const loginUrl = normalizeUrl(await input({ message: 'Login URL:', default: a.loginUrl, validate: validUrl }));
     const username = await input({ message: 'Test username:', default: a.username });
+    // Value comes from an interactive prompt, never a literal; it is written only to
+    // the gitignored .env.local. The scanner matches the prompt label, not a secret.
+    // security-audit-ignore: committed-secret — interactive prompt label, no literal secret
     const authPassword = await password({ message: 'Test password:' });
     console.log(chalk.dim('  ↳ Credentials stored in .env.local (gitignored). Never committed.'));
     return { authMode, loginUrl, username, authPassword };

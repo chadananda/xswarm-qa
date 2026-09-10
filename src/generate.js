@@ -1,6 +1,6 @@
 import { mkdir, writeFile, chmod } from 'fs/promises';
 import { join, basename, dirname, resolve } from 'path';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import chalk from 'chalk';
 import ora from 'ora';
 import * as T from './templates.js';
@@ -60,8 +60,13 @@ export async function generate(root, answers, { dryRun, version }) {
     const absPath = resolve(root);
     const host = new URL(answers.url).hostname;
     try {
-      execSync(
-        `openclaw cron add --name "xSwarm QA: ${host}" --cron "${answers.cronSchedule}" --session isolated --message "cd ${absPath} && ./check-and-run.sh"`,
+      execFileSync(
+        'openclaw',
+        ['cron', 'add',
+          '--name', `xSwarm QA: ${host}`,
+          '--cron', answers.cronSchedule,
+          '--session', 'isolated',
+          '--message', `cd ${absPath} && ./check-and-run.sh`],
         { stdio: 'pipe' },
       );
       console.log(chalk.green(`  ✓ OpenClaw cron job registered (${answers.cronSchedule})`));
@@ -79,8 +84,9 @@ export async function generate(root, answers, { dryRun, version }) {
         `The --force flag skips change detection and always runs a full QA session.`,
         `Please notify the user that automated QA is now active for this site.`,
       ].join(' ');
-      execSync(
-        `openclaw system event --text ${JSON.stringify(msg)} --mode now`,
+      execFileSync(
+        'openclaw',
+        ['system', 'event', '--text', msg, '--mode', 'now'],
         { stdio: 'pipe' },
       );
       console.log(chalk.green('  ✓ OpenClaw notified'));
