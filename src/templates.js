@@ -356,12 +356,26 @@ export const checkUpdateTool = () => `#!/usr/bin/env node
 
 const { readFileSync, writeFileSync, existsSync } = require('fs');
 
-// Minimal JSON5 reader: strip comments + trailing commas → JSON.parse
+// Minimal JSON5 reader: strip comments + trailing commas → JSON.parse.
+// Must skip string literals — a bare //-strip truncated every https:// url.
 const readConfig = (path) => {
   const raw = readFileSync(path, 'utf8');
-  return JSON.parse(
-    raw.replace(/\\/\\/.*$/gm, '').replace(/\\/\\*[\\s\\S]*?\\*\\//g, '').replace(/,\\s*([}\\]])/g, '$1')
-  );
+  let out = '', inStr = false, esc = false;
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw[i];
+    if (inStr) {
+      out += c;
+      if (esc) esc = false;
+      else if (c === '\\\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') { inStr = true; out += c; continue; }
+    if (c === '/' && raw[i + 1] === '/') { while (i < raw.length && raw[i] !== '\\n') i++; out += '\\n'; continue; }
+    if (c === '/' && raw[i + 1] === '*') { i += 2; while (i < raw.length && !(raw[i] === '*' && raw[i + 1] === '/')) i++; i++; continue; }
+    out += c;
+  }
+  return JSON.parse(out.replace(/,(\\s*[}\\]])/g, '$1'));
 };
 
 // Quick non-crypto hash for string comparison
@@ -418,9 +432,22 @@ const { join } = require('path');
 
 const readConfig = (path) => {
   const raw = readFileSync(path, 'utf8');
-  return JSON.parse(
-    raw.replace(/\\/\\/.*$/gm, '').replace(/\\/\\*[\\s\\S]*?\\*\\//g, '').replace(/,\\s*([}\\]])/g, '$1')
-  );
+  let out = '', inStr = false, esc = false;
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw[i];
+    if (inStr) {
+      out += c;
+      if (esc) esc = false;
+      else if (c === '\\\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') { inStr = true; out += c; continue; }
+    if (c === '/' && raw[i + 1] === '/') { while (i < raw.length && raw[i] !== '\\n') i++; out += '\\n'; continue; }
+    if (c === '/' && raw[i + 1] === '*') { i += 2; while (i < raw.length && !(raw[i] === '*' && raw[i + 1] === '/')) i++; i++; continue; }
+    out += c;
+  }
+  return JSON.parse(out.replace(/,(\\s*[}\\]])/g, '$1'));
 };
 
 (async () => {

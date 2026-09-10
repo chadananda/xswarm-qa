@@ -5,10 +5,10 @@ import { execSync } from 'child_process';
 // ── Validation ──────────────────────────────────────────────
 // Format-only check. Actual reachability tested during QA runs, not setup
 // (avoids blocking on slow DNS or firewalled dev servers).
-const normalizeUrl = s => /^https?:\/\//i.test(s) ? s : `https://${s}`;
-const looksLikeDomain = s => /^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)*\.[a-z]{2,}$/i.test(s);
+export const normalizeUrl = s => /^https?:\/\//i.test(s) ? s : `https://${s}`;
+export const looksLikeDomain = s => /^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)*\.[a-z]{2,}$/i.test(s);
 
-const validUrl = s => {
+export const validUrl = s => {
   try { new URL(normalizeUrl(s)); return true; }
   catch { return 'Enter a valid URL (example.com)'; }
 };

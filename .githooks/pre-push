@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Refuses a push whose tests are red or whose quality gate has regressed.
+# Enable once per clone:  git config core.hooksPath .githooks
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+npm test --silent
+node "$HOME/.claude/quality/gate.mjs" --project "$PWD" --fast

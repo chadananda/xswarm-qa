@@ -3,6 +3,12 @@
   "version": "1.0.4",
   "description": "Autonomous AI-powered QA assistant. Point at any web app, get professional audit reports. Zero integration required.",
   "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "gate": "node ~/.claude/quality/gate.mjs --project \"$PWD\"",
+    "prepublishOnly": "npm test && node ~/.claude/quality/gate.mjs --project \"$PWD\" --fast"
+  },
   "bin": {
     "xswarm-qa": "src/index.js"
   },
@@ -44,5 +50,8 @@
     "chalk": "^6.0.0",
     "gradient-string": "^3.0.0",
     "ora": "^9.4.1"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.0"
   }
 }
