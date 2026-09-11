@@ -5,7 +5,10 @@ import { join, basename, dirname, resolve } from 'path';
 import { execFileSync } from 'child_process';
 import chalk from 'chalk';
 import ora from 'ora';
-import * as T from './templates.js';
+import { gitignore, envLocal, config, checkAndRun } from './templates.js';
+import { agentQA } from './templates/agent-qa.js';
+import { checkUpdateTool, notifyTool } from './templates/tools.js';
+import { workspaceReadme } from './templates/readme.js';
 
 /**
  * Create the full QA workspace from interview answers.
@@ -15,19 +18,19 @@ export async function generate(root, answers, { dryRun, version }) {
   // Complete file manifest: [relative-path, content, options?]
   // Every file the workspace needs lives here — single source of truth.
   const files = [
-    ['.gitignore',                        T.gitignore()],
-    ['.env.local',                        T.envLocal(answers)],
-    ['xswarm-qa.config.json5',            T.config(answers)],
-    ['check-and-run.sh',                  T.checkAndRun(answers), { mode: 0o755 }],
+    ['.gitignore',                        gitignore()],
+    ['.env.local',                        envLocal(answers)],
+    ['xswarm-qa.config.json5',            config(answers)],
+    ['check-and-run.sh',                  checkAndRun(answers), { mode: 0o755 }],
     ['.xswarm-qa/version.txt',            version],
     ['.xswarm-qa/schema-version.txt',     '1'],
-    ['.claude/QA.md',                     T.agentQA('claude-code', answers)],
-    ['.gemini/QA.md',                     T.agentQA('gemini-cli', answers)],
-    ['.codex/QA.md',                      T.agentQA('codex', answers)],
-    ['.local/QA.md',                      T.agentQA('local-ai', answers)],
-    ['.xswarm-qa/tools/check-update.js',  T.checkUpdateTool()],
-    ['.xswarm-qa/tools/notify.js',        T.notifyTool()],
-    ['README.md',                         T.workspaceReadme(answers, version)],
+    ['.claude/QA.md',                     agentQA('claude-code', answers)],
+    ['.gemini/QA.md',                     agentQA('gemini-cli', answers)],
+    ['.codex/QA.md',                      agentQA('codex', answers)],
+    ['.local/QA.md',                      agentQA('local-ai', answers)],
+    ['.xswarm-qa/tools/check-update.js',  checkUpdateTool()],
+    ['.xswarm-qa/tools/notify.js',        notifyTool()],
+    ['README.md',                         workspaceReadme(answers, version)],
   ];
 
   const dirs = [
