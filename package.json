@@ -6,8 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "gate": "node ~/.claude/quality/gate.mjs --project \"$PWD\"",
-    "prepublishOnly": "npm test && node ~/.claude/quality/gate.mjs --project \"$PWD\" --fast"
+    "gate": "node quality/gate.mjs",
+    "prepublishOnly": "npm test && node quality/gate.mjs --fast"
   },
   "bin": {
     "xswarm-qa": "src/index.js"
