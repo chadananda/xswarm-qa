@@ -1,3 +1,5 @@
+// CLI entry: arg parsing, help text, and the existing-workspace guard.
+// Delegates to interview() then generate(). Deps: chalk, gradient-string.
 import chalk from 'chalk';
 import gradient from 'gradient-string';
 import { readFileSync, existsSync } from 'fs';
@@ -21,7 +23,7 @@ const LOGO = `
 
 const brand = gradient(['#ff6b35', '#ffa726', '#ffcc80']);
 
-export function printLogo() {
+function printLogo() {
   console.log(brand(LOGO));
   console.log(chalk.dim(`  v${pkg.version} · Autonomous AI Quality Assurance · xswarm.ai\n`));
 }

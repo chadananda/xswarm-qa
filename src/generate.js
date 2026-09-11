@@ -1,3 +1,5 @@
+// Writes the QA workspace to disk from interview answers, then optionally registers
+// an OpenClaw cron. Shells out via execFileSync only — never a template literal.
 import { mkdir, writeFile, chmod } from 'fs/promises';
 import { join, basename, dirname, resolve } from 'path';
 import { execFileSync } from 'child_process';

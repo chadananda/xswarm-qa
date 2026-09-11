@@ -346,17 +346,10 @@ export const agentQA = (type, answers) =>
 // ── Update Detection Tool ───────────────────────────────────
 // Standalone Node.js script (CommonJS — no package.json dependency).
 // Called by check-and-run.sh. Exit 0 = changed, exit 1 = unchanged.
-export const checkUpdateTool = () => `#!/usr/bin/env node
-// xSwarm QA — Update Detection
-// Compares current site state against .xswarm-qa/.last-version
-// to decide whether a QA session is warranted.
-//
-// Exit 0 = changes detected → run QA
-// Exit 1 = no changes → skip
-
-const { readFileSync, writeFileSync, existsSync } = require('fs');
-
-// Minimal JSON5 reader: strip comments + trailing commas → JSON.parse.
+// Emitted verbatim into both generated tools. Defined once here because this reader
+// already shipped one bug (a bare //-strip truncated every https:// url), and a
+// second copy is a second place to miss the next one.
+const READ_CONFIG_SRC = `// Minimal JSON5 reader: strip comments + trailing commas → JSON.parse.
 // Must skip string literals — a bare //-strip truncated every https:// url.
 const readConfig = (path) => {
   const raw = readFileSync(path, 'utf8');
@@ -376,7 +369,19 @@ const readConfig = (path) => {
     out += c;
   }
   return JSON.parse(out.replace(/,(\\s*[}\\]])/g, '$1'));
-};
+};`;
+
+export const checkUpdateTool = () => `#!/usr/bin/env node
+// xSwarm QA — Update Detection
+// Compares current site state against .xswarm-qa/.last-version
+// to decide whether a QA session is warranted.
+//
+// Exit 0 = changes detected → run QA
+// Exit 1 = no changes → skip
+
+const { readFileSync, writeFileSync, existsSync } = require('fs');
+
+${READ_CONFIG_SRC}
 
 // Quick non-crypto hash for string comparison
 const hash = (s) => { let h = 0; for (const c of s) h = ((h << 5) - h + c.charCodeAt(0)) | 0; return h.toString(36); };
@@ -430,25 +435,7 @@ export const notifyTool = () => `#!/usr/bin/env node
 const { readFileSync, writeFileSync, existsSync } = require('fs');
 const { join } = require('path');
 
-const readConfig = (path) => {
-  const raw = readFileSync(path, 'utf8');
-  let out = '', inStr = false, esc = false;
-  for (let i = 0; i < raw.length; i++) {
-    const c = raw[i];
-    if (inStr) {
-      out += c;
-      if (esc) esc = false;
-      else if (c === '\\\\') esc = true;
-      else if (c === '"') inStr = false;
-      continue;
-    }
-    if (c === '"') { inStr = true; out += c; continue; }
-    if (c === '/' && raw[i + 1] === '/') { while (i < raw.length && raw[i] !== '\\n') i++; out += '\\n'; continue; }
-    if (c === '/' && raw[i + 1] === '*') { i += 2; while (i < raw.length && !(raw[i] === '*' && raw[i + 1] === '/')) i++; i++; continue; }
-    out += c;
-  }
-  return JSON.parse(out.replace(/,(\\s*[}\\]])/g, '$1'));
-};
+${READ_CONFIG_SRC}
 
 (async () => {
   const session = process.argv[2];

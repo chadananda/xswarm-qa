@@ -1,3 +1,5 @@
+// The six-stage setup interview. Returns the answers object generate() consumes,
+// or null if cancelled. Validation is format-only; reachability is tested at QA time.
 import chalk from 'chalk';
 import { input, select, confirm, password } from '@inquirer/prompts';
 import { execSync } from 'child_process';
