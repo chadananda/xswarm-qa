@@ -148,10 +148,13 @@ ${READ_CONFIG_SRC}
     : { site: config.site.name, session, status: 'completed' };
 
   if (type === 'webhook' && url) {
+    // check-and-run.sh waits on this, so an unresponsive webhook would hold the whole
+    // cron job open after the QA session has already finished.
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ event: 'qa-session-complete', ...payload }),
+      signal: AbortSignal.timeout(10000),
     });
     console.log('  Webhook:', res.status);
   } else if (type === 'file-signal') {

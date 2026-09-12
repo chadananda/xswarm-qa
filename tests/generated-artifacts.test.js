@@ -91,3 +91,33 @@ describe.each(COMBOS)('$strategy / $authMode / $agent', ({ strategy, authMode, a
     else expect(env).not.toContain(secret);
   });
 });
+
+describe('the shipped JSON5 reader', () => {
+  const dir = () => built.get('manual/audit/claude-code');
+
+  it('is byte-identical in every tool that carries it', async () => {
+    const bodies = [];
+    for (const t of ['check-update', 'notify', 'config-get']) {
+      const src = await readFile(join(dir(), '.xswarm-qa/tools', `${t}.js`), 'utf8');
+      const m = src.match(/const readConfig = \(path\) => \{[\s\S]*?\n\};/);
+      expect(m, `${t}.js has no readConfig`).toBeTruthy();
+      bodies.push(m[0]);
+    }
+    // Three copies that drift are how the //-strip bug survived in check-and-run.sh
+    // after both tools had been fixed.
+    expect(new Set(bodies).size).toBe(1);
+  });
+
+  it('appears nowhere as a bare regex strip', async () => {
+    for (const f of ['check-and-run.sh', '.xswarm-qa/tools/check-update.js',
+                     '.xswarm-qa/tools/notify.js', '.xswarm-qa/tools/config-get.js']) {
+      const src = await readFile(join(dir(), f), 'utf8');
+      expect(src, f).not.toMatch(/replace\(\/\\\/\\\/\.\*\$\/gm/);
+    }
+  });
+
+  it('gives the notify webhook a deadline too', async () => {
+    const src = await readFile(join(dir(), '.xswarm-qa/tools/notify.js'), 'utf8');
+    expect(src).toMatch(/AbortSignal\.timeout/);
+  });
+});
