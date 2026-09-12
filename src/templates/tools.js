@@ -46,6 +46,11 @@ const hash = (s) => { let h = 0; for (const c of s) h = ((h << 5) - h + c.charCo
 
 const LAST = '.xswarm-qa/.last-version';
 
+// Every fetch here runs unattended from cron. Without a deadline a hung connection
+// hangs the job forever and the next run never starts.
+const FETCH_TIMEOUT_MS = 10000;
+const get = (url) => fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+
 (async () => {
   const config = readConfig('xswarm-qa.config.json5');
   const { strategy } = config.updates;
@@ -56,20 +61,22 @@ const LAST = '.xswarm-qa/.last-version';
   let curr = '';
 
   if (strategy === 'version-endpoint') {
-    const res = await fetch(config.updates.endpoint);
+    const res = await get(config.updates.endpoint);
     const data = await res.json();
     curr = config.updates.jsonPath.split('.').filter(Boolean).reduce((o, k) => o?.[k], data)?.toString() || '';
   } else if (strategy === 'rss') {
-    const res = await fetch(config.updates.feedUrl);
+    const res = await get(config.updates.feedUrl);
     curr = res.headers.get('last-modified') || hash(await res.text());
   } else if (strategy === 'sitemap') {
-    const res = await fetch(new URL('/sitemap.xml', config.site.url));
+    const res = await get(new URL('/sitemap.xml', config.site.url));
     curr = hash(await res.text());
   } else if (strategy === 'homepage-hash') {
-    const res = await fetch(config.site.url);
+    const res = await get(config.site.url);
     // Strip nonce/timestamp elements for stable comparison
     curr = hash((await res.text()).replace(/<script[^>]*nonce[^>]*>[\\s\\S]*?<\\/script>/g, ''));
   }
+
+  if (!curr) console.error('check-update: strategy ' + strategy + ' produced no version marker — treating as unchanged');
 
   if (curr) writeFileSync(LAST, curr, 'utf8');
 
@@ -78,7 +85,12 @@ const LAST = '.xswarm-qa/.last-version';
 
   if (curr && curr !== prev) process.exit(0);
   process.exit(1);
-})().catch(() => process.exit(1));
+})().catch((err) => {
+  // Unattended, a silent exit 1 is indistinguishable from "site unchanged", so the QA
+  // run stops happening and nothing says why. Always name the failure.
+  console.error('check-update failed: ' + ((err && err.message) || err));
+  process.exit(1);
+});
 `;
 
 // ── Notification Tool ───────────────────────────────────────
