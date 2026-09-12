@@ -29,6 +29,33 @@ const readConfig = (path) => {
   return JSON.parse(out.replace(/,(\\s*[}\\]])/g, '$1'));
 };`;
 
+// Reads one dotted path out of the JSON5 config and prints it. Exists so the bash
+// runner never has to parse JSON5 itself — an inline //-stripper there silently
+// truncated every https:// url and sent every workspace to the wrong agent.
+export const configGetTool = () => `#!/usr/bin/env node
+// xSwarm QA — Config Reader
+// Usage: node config-get.js <dotted.path>
+// Prints the value, or exits 1 if the path is absent.
+
+const { readFileSync } = require('fs');
+
+${READ_CONFIG_SRC}
+
+const path = process.argv[2] || '';
+if (!path) { console.error('Usage: config-get.js <dotted.path>'); process.exit(1); }
+
+let value;
+try {
+  value = path.split('.').filter(Boolean).reduce((o, k) => (o == null ? o : o[k]), readConfig('xswarm-qa.config.json5'));
+} catch (err) {
+  console.error('config-get failed: ' + ((err && err.message) || err));
+  process.exit(1);
+}
+
+if (value === undefined || value === null) process.exit(1);
+console.log(String(value));
+`;
+
 export const checkUpdateTool = () => `#!/usr/bin/env node
 // xSwarm QA — Update Detection
 // Compares current site state against .xswarm-qa/.last-version

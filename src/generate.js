@@ -7,7 +7,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { gitignore, envLocal, config, checkAndRun } from './templates.js';
 import { agentQA } from './templates/agent-qa.js';
-import { checkUpdateTool, notifyTool } from './templates/tools.js';
+import { checkUpdateTool, notifyTool, configGetTool } from './templates/tools.js';
 import { workspaceReadme } from './templates/readme.js';
 
 /**
@@ -30,6 +30,7 @@ export async function generate(root, answers, { dryRun, version }) {
     ['.local/QA.md',                      agentQA('local-ai', answers)],
     ['.xswarm-qa/tools/check-update.js',  checkUpdateTool()],
     ['.xswarm-qa/tools/notify.js',        notifyTool()],
+    ['.xswarm-qa/tools/config-get.js',    configGetTool()],
     ['README.md',                         workspaceReadme(answers, version)],
   ];
 

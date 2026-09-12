@@ -110,7 +110,7 @@ echo "════════════════════════�
 
 # ── Update Detection ────────────────────────────────────
 if [[ "\${1:-}" != "--force" ]]; then
-  if node .xswarm-qa/tools/check-update.js 2>/dev/null; then
+  if node .xswarm-qa/tools/check-update.js; then
     echo "  Changes detected. Starting QA session..."
   else
     echo "  No changes detected. Use --force to run anyway."
@@ -119,12 +119,9 @@ if [[ "\${1:-}" != "--force" ]]; then
 fi
 
 # ── Read Agent Type ─────────────────────────────────────
-# Uses node to correctly parse JSON5 config (handles comments + trailing commas)
-AGENT=$(node -e "
-  const raw = require('fs').readFileSync('xswarm-qa.config.json5','utf8');
-  const j = raw.replace(/\\/\\/.*$/gm,'').replace(/\\/\\*[\\s\\S]*?\\*\\//g,'').replace(/,\\s*([}\\]])/g,'\\$1');
-  try { console.log(JSON.parse(j).agent.type); } catch { console.log('claude-code'); }
-" 2>/dev/null || echo "claude-code")
+# Via the shipped reader: the config is JSON5 and a naive //-strip truncates the
+# site url, which used to send every workspace to claude-code regardless of config.
+AGENT=$(node .xswarm-qa/tools/config-get.js agent.type || echo "claude-code")
 
 echo "  Agent: $AGENT"
 echo ""
@@ -161,7 +158,7 @@ REPORT_PATH="$(pwd)/$SESSION/report.md"
 if command -v openclaw &>/dev/null; then
   openclaw system event --text "xSwarm QA report ready for ${host(a.url)}. Read the report at: $REPORT_PATH" --mode now 2>/dev/null || true
 fi
-` : ''}node .xswarm-qa/tools/notify.js "$SESSION" 2>/dev/null || true
+` : ''}node .xswarm-qa/tools/notify.js "$SESSION" || true
 `;
 
 // ── Re-exports ──────────────────────────────────────────────
