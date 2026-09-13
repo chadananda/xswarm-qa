@@ -21,9 +21,11 @@ const readConfig = (path) => {
       else if (c === '"') inStr = false;
       continue;
     }
-    if (c === '"') { inStr = true; out += c; continue; }
+    // Comments first: a quote inside a comment must not be read as a string opening,
+    // or an odd number of them silently swallows the rest of the file.
     if (c === '/' && raw[i + 1] === '/') { while (i < raw.length && raw[i] !== '\\n') i++; out += '\\n'; continue; }
     if (c === '/' && raw[i + 1] === '*') { i += 2; while (i < raw.length && !(raw[i] === '*' && raw[i + 1] === '/')) i++; i++; continue; }
+    if (c === '"') { inStr = true; out += c; continue; }
     out += c;
   }
   return JSON.parse(out.replace(/,(\\s*[}\\]])/g, '$1'));

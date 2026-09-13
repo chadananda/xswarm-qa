@@ -30,6 +30,11 @@ AUTH_PASSWORD=${a.authPassword || ''}` : `# Uncomment and fill in to enable auth
 // ── JSON5 Config ────────────────────────────────────────────
 // Quoted keys so the file can be parsed by JSON.parse after stripping
 // comments and trailing commas — no JSON5 library needed at runtime.
+// Every interpolated value below lands inside a JSON5 document. Interpolating them raw
+// meant a single double quote in a url produced a config that no tool in the workspace
+// could read — config-get, check-update and notify all failed together.
+const j = (v) => JSON.stringify(v === undefined || v === null ? '' : String(v));
+
 export const config = (a) => `// xSwarm QA Configuration — ${host(a.url)}
 // Edit this file anytime. Changes take effect on the next run.
 // Format: JSON5 (comments OK, trailing commas OK).
@@ -37,31 +42,31 @@ export const config = (a) => `// xSwarm QA Configuration — ${host(a.url)}
 {
   // ─── Target Site ───────────────────────────────────────
   "site": {
-    "name": "${host(a.url)}",
-    "url": "${a.url}",
-    "domains": [${a.domains ? a.domains.split(',').map(d => `"${d.trim()}"`).join(', ') : ''}],
+    "name": ${j(host(a.url))},
+    "url": ${j(a.url)},
+    "domains": [${a.domains ? a.domains.split(',').map(d => j(d.trim())).join(', ') : ''}],
   },
 
   // ─── Authentication ────────────────────────────────────
   // Enable: set required to true, add credentials to .env.local
   "auth": {
     "required": ${a.authMode === 'auth'},
-    "loginUrl": "${a.loginUrl || ''}",
+    "loginUrl": ${j(a.loginUrl)},
   },
 
   // ─── Update Detection ─────────────────────────────────
   // How check-and-run.sh decides whether to trigger a QA session.
   // Strategies: version-endpoint | rss | sitemap | homepage-hash | manual
   "updates": {
-    "strategy": "${a.strategy}",${a.strategy === 'version-endpoint' ? `
-    "endpoint": "${a.strategyConfig?.endpoint || ''}",
-    "jsonPath": "${a.strategyConfig?.jsonPath || '.version'}",` : ''}${a.strategy === 'rss' ? `
-    "feedUrl": "${a.strategyConfig?.feedUrl || ''}",` : ''}
+    "strategy": ${j(a.strategy)},${a.strategy === 'version-endpoint' ? `
+    "endpoint": ${j(a.strategyConfig?.endpoint)},
+    "jsonPath": ${j(a.strategyConfig?.jsonPath || '.version')},` : ''}${a.strategy === 'rss' ? `
+    "feedUrl": ${j(a.strategyConfig?.feedUrl)},` : ''}
   },
 
   // ─── Schedule ──────────────────────────────────────────
   "schedule": {
-    "frequency": "${a.frequency}",  // on-change | daily | weekly | manual
+    "frequency": ${j(a.frequency)},  // on-change | daily | weekly | manual
     "rapidDevelopment": ${!!a.rapidDev},  // shorter cache TTL, deeper testing
   },
 
@@ -69,7 +74,7 @@ export const config = (a) => `// xSwarm QA Configuration — ${host(a.url)}
   // All agents installed (.claude/, .gemini/, .codex/, .local/).
   // Change "type" to switch. No reinstall needed.
   "agent": {
-    "type": "${a.agent}",  // claude-code | gemini-cli | codex | local-ai
+    "type": ${j(a.agent)},  // claude-code | gemini-cli | codex | local-ai
     "flags": ["--yolo"],${a.agent === 'local-ai' ? `
     // Customize for your inference server:
     // "endpoint": "http://localhost:11434/api/generate",
@@ -89,7 +94,7 @@ export const config = (a) => `// xSwarm QA Configuration — ${host(a.url)}
   // ─── OpenClaw Integration ──────────────────────────────
   "openclaw": {
     "enabled": ${!!a.openclaw},${a.openclaw ? `
-    "cronSchedule": "${a.cronSchedule}",
+    "cronSchedule": ${j(a.cronSchedule)},
     "notifyOnReport": ${!!a.openclawNotify},` : ''}
   },
 }
