@@ -76,6 +76,16 @@ export const config = (a) => `// xSwarm QA Configuration — ${host(a.url)}
     // "model": "llama3:70b",` : ''}
   },
 
+  // ─── Notifications ─────────────────────────────────────
+  // Sent by .xswarm-qa/tools/notify.js once a session finishes.
+  //   none        — do nothing (default)
+  //   webhook     — POST the run summary to "url"
+  //   file-signal — write .signal in the workspace root
+  "notifications": {
+    "type": "none",  // none | webhook | file-signal
+    "url": "",
+  },
+
   // ─── OpenClaw Integration ──────────────────────────────
   "openclaw": {
     "enabled": ${!!a.openclaw},${a.openclaw ? `
@@ -127,38 +137,54 @@ echo "  Agent: $AGENT"
 echo ""
 
 # ── Invoke Agent ────────────────────────────────────────
-case "$AGENT" in
-  claude-code)
-    claude --print --dangerously-skip-permissions \\
-      -p "Read .claude/QA.md for your complete instructions. Session folder: $SESSION" \\
-      2>&1 | tee "$SESSION/session.log"
-    ;;
-  gemini-cli)
-    gemini < .gemini/QA.md 2>&1 | tee "$SESSION/session.log"
-    ;;
-  codex)
-    codex --prompt-file .codex/QA.md 2>&1 | tee "$SESSION/session.log"
-    ;;
-  local-ai)
-    echo "  Local AI requires custom configuration."
-    echo "  Edit this script to add your model invocation command."
-    exit 1
-    ;;
-  *)
-    echo "  Unknown agent: $AGENT"
-    exit 1
-    ;;
-esac
+# In a function so a failing agent does not trip set -e and skip the reporting
+# below. A QA watchdog that notifies on success and goes quiet on failure says
+# nothing on exactly the day you need to hear from it.
+run_agent() {
+  case "$AGENT" in
+    claude-code)
+      claude --print --dangerously-skip-permissions \\
+        -p "Read .claude/QA.md for your complete instructions. Session folder: $SESSION" \\
+        2>&1 | tee "$SESSION/session.log"
+      ;;
+    gemini-cli)
+      gemini < .gemini/QA.md 2>&1 | tee "$SESSION/session.log"
+      ;;
+    codex)
+      codex --prompt-file .codex/QA.md 2>&1 | tee "$SESSION/session.log"
+      ;;
+    local-ai)
+      echo "  Local AI requires custom configuration."
+      echo "  Edit this script to add your model invocation command."
+      return 1
+      ;;
+    *)
+      echo "  Unknown agent: $AGENT"
+      return 1
+      ;;
+  esac
+}
+
+AGENT_STATUS=0
+run_agent || AGENT_STATUS=$?
 
 echo ""
-echo "  Session complete: $SESSION/"
+if [[ $AGENT_STATUS -eq 0 ]]; then
+  echo "  Session complete: $SESSION/"
+else
+  echo "  Session FAILED — agent exited $AGENT_STATUS. Log: $SESSION/session.log" >&2
+fi
 ${a.openclawNotify ? `
 # ── Notify OpenClaw ────────────────────────────────────
 REPORT_PATH="$(pwd)/$SESSION/report.md"
 if command -v openclaw &>/dev/null; then
-  openclaw system event --text "xSwarm QA report ready for ${host(a.url)}. Read the report at: $REPORT_PATH" --mode now 2>/dev/null || true
+  openclaw system event --text "xSwarm QA $([[ $AGENT_STATUS -eq 0 ]] && echo 'report ready' || echo 'run FAILED') for ${host(a.url)}. Read the report at: $REPORT_PATH" --mode now 2>/dev/null || true
 fi
-` : ''}node .xswarm-qa/tools/notify.js "$SESSION" || true
+` : ''}
+# Always notify, pass or fail; the exit code tells notify.js which it was.
+node .xswarm-qa/tools/notify.js "$SESSION" "$AGENT_STATUS" || true
+
+exit $AGENT_STATUS
 `;
 
 // ── Re-exports ──────────────────────────────────────────────

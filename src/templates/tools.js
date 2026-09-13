@@ -139,13 +139,23 @@ ${READ_CONFIG_SRC}
   if (!session) { console.error('Usage: notify.js <session-path>'); process.exit(1); }
 
   const config = readConfig('xswarm-qa.config.json5');
-  const { type, url } = config.notifications;
+  // Workspaces generated before the notifications section existed have no such key,
+  // and destructuring it threw on every single run. Absent means none.
+  const { type = 'none', url = '' } = config.notifications || {};
   if (type === 'none') return;
 
+  // argv[3] is the agent's exit code when check-and-run.sh passes it. It wins over a
+  // summary claiming success, because a summary can be written before the agent dies.
+  const agentStatus = process.argv[3];
+  const status = agentStatus === undefined ? 'completed' : (agentStatus === '0' ? 'completed' : 'failed');
+
   const summaryPath = join(session, 'summary.json');
-  const payload = existsSync(summaryPath)
-    ? JSON.parse(readFileSync(summaryPath, 'utf8'))
-    : { site: config.site.name, session, status: 'completed' };
+  const payload = {
+    ...(existsSync(summaryPath)
+      ? JSON.parse(readFileSync(summaryPath, 'utf8'))
+      : { site: config.site.name, session }),
+    status,
+  };
 
   if (type === 'webhook' && url) {
     // check-and-run.sh waits on this, so an unresponsive webhook would hold the whole
