@@ -23,7 +23,7 @@ const makeWorkspace = async (name, { notifications = 'none', strategy = 'manual'
     url: 'https://example.com', authMode: 'audit', loginUrl: '', username: '', authPassword: '',
     strategy, strategyConfig: {}, agent: 'claude-code',
     openclaw: false, cronSchedule: '', openclawNotify: false,
-    focus: ['seo'], depth: 'standard',
+    rapidDev: false, frequency: 'daily',
   }, { dryRun: false, version: 'test' });
   if (notifications !== 'none') {
     const cfgPath = join(dir, 'xswarm-qa.config.json5');

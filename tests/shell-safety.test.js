@@ -36,7 +36,7 @@ const answersWith = (over = {}) => ({
   url: 'https://example.com', authMode: 'audit', loginUrl: '', username: '', authPassword: '',
   strategy: 'manual', strategyConfig: {}, agent: 'claude',
   openclaw: true, cronSchedule: '0 3 * * *', openclawNotify: true,
-  focus: ['seo'], depth: 'standard', ...over,
+  rapidDev: false, frequency: 'daily', ...over,
 });
 
 const records = async () =>

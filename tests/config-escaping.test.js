@@ -20,7 +20,7 @@ const build = async (over = {}) => {
     url: 'https://example.com', authMode: 'audit', loginUrl: '', username: '', authPassword: '',
     strategy: 'manual', strategyConfig: {}, agent: 'claude-code',
     openclaw: false, cronSchedule: '', openclawNotify: false,
-    focus: ['seo'], depth: 'standard', frequency: 'daily', ...over,
+    rapidDev: false, frequency: 'daily', frequency: 'daily', ...over,
   }, { dryRun: false, version: 'test' });
   return dir;
 };

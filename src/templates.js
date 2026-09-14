@@ -44,7 +44,9 @@ export const config = (a) => `// xSwarm QA Configuration — ${host(a.url)}
   "site": {
     "name": ${j(host(a.url))},
     "url": ${j(a.url)},
-    "domains": [${a.domains ? a.domains.split(',').map(d => j(d.trim())).join(', ') : ''}],
+    // filter(Boolean) because a trailing or doubled comma is the normal typo in a
+    // free-text list, and "" is not a domain the agent should try to test.
+    "domains": [${(a.domains || '').split(',').map(d => d.trim()).filter(Boolean).map(j).join(', ')}],
   },
 
   // ─── Authentication ────────────────────────────────────

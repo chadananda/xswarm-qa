@@ -13,7 +13,7 @@ const baseAnswers = (over = {}) => ({
   url: 'https://example.com', authMode: 'audit', loginUrl: '', username: '', authPassword: '',
   strategy: 'manual', strategyConfig: {}, agent: 'claude',
   openclaw: false, cronSchedule: '', openclawNotify: false,
-  focus: ['seo'], depth: 'standard', ...over,
+  rapidDev: false, frequency: 'daily', ...over,
 });
 
 describe('generate()', () => {

@@ -24,7 +24,7 @@ beforeAll(async () => {
       url: 'https://example.com', authMode: 'audit', loginUrl: '', username: '', authPassword: '',
       strategy: 'manual', strategyConfig: {}, agent,
       openclaw: false, cronSchedule: '', openclawNotify: false,
-      focus: ['seo'], depth: 'standard',
+      rapidDev: false, frequency: 'daily',
     }, { dryRun: false, version: 'test' });
     dirs.set(agent, dir);
   }

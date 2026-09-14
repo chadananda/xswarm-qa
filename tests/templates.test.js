@@ -6,7 +6,7 @@ const a = {
   url: 'https://example.com', authMode: 'audit', loginUrl: '', username: '', authPassword: '',
   strategy: 'manual', strategyConfig: {}, agent: 'claude',
   openclaw: false, cronSchedule: '', openclawNotify: false,
-  focus: ['seo', 'performance'], depth: 'standard',
+  rapidDev: false, frequency: 'daily',
 };
 
 // The generated tools ship their own JSON5 reader. Extract the real one out of the

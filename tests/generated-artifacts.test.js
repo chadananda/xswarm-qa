@@ -28,7 +28,7 @@ const answersFor = (strategy, authMode, agent) => ({
   authPassword: authMode === 'auth' ? 'correct-horse-battery' : '',
   strategy, strategyConfig: strategyConfigFor(strategy), agent,
   openclaw: false, cronSchedule: '', openclawNotify: false,
-  focus: ['seo', 'performance'], depth: 'standard', folderName: 'demo-qa',
+  rapidDev: false, frequency: 'daily', folderName: 'demo-qa',
 });
 
 const COMBOS = [];
