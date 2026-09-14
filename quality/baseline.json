@@ -1,10 +1,10 @@
 {
-  "recorded_at": "2026-09-13T08:41:08.099Z",
+  "recorded_at": "2026-09-14T08:37:30.658Z",
   "note": "Counts only ever move DOWN. Raising a number here means accepting worse, and should be a deliberate, explained commit.",
   "checks": {
     "tests": {
       "problems": 0,
-      "detail": "229 passed, 0 failed",
+      "detail": "266 passed, 0 failed",
       "was": 0
     },
     "visual": {
